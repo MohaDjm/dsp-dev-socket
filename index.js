@@ -14,24 +14,34 @@ app.get('/channel/:channelName', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-    console.log('Un utilisateur s\'est connecté')
+    console.log('Un utilisateur s\'est connecté');
     socket.on('disconnect', () => {
-        console.log('Un utilisateur s\'est déconnecté')
+        console.log('Un utilisateur s\'est déconnecté');
     });
     socket.on('SMessage', (msg) => {
-        io.emit('CMessage', { msg, id: socket.id });
+        const channel = socket.channel;
+        if (channel) {
+            io.to(channel).emit('CMessage', { msg, id: socket.id });
+        }
     });
     socket.on('STyping', () => {
-        socket.broadcast.emit('CTyping', 'Quelqu\'un est en train d\'écrire...');
+        const channel = socket.channel;
+        if (channel) {
+            socket.to(channel).emit('CTyping', 'Quelqu\'un est en train d\'écrire...');
+        }
     });
     socket.on('SStopTyping', () => {
-        socket.broadcast.emit('CStopTyping');
+        const channel = socket.channel;
+        if (channel) {
+            socket.to(channel).emit('CStopTyping');
+        }
     });
     socket.on('joinChannel', (channel) => {
         socket.join(channel);
-        console.log(`User joined channel: ${channel}`);
+        socket.channel = channel;
+        console.log(`Un utilisateur a rejoint le channel: ${channel}`);
     });
 });
 server.listen(5000, () => {
-    console.log('server running at http://localhost:5000')
+    console.log('server running at http://localhost:5000');
 });
